@@ -1,50 +1,40 @@
 // ts -> .d.ts  翻译文件 -> js
-import superagent from 'superagent'
-import cheerio from 'cheerio'
+import fs from 'fs';
+import path from 'path';
+import superagent from 'superagent';
+import cnodeAnalyzer from './cnodeAnalyzer';
+import CnodeAnalyzer from './cnodeAnalyzer';
 
-interface Article {
-	title: string;
-	visit: number;
+export interface Analyzer {
+  analyze: (html: string, filePath: string) => string;
 }
 
 class Crowller {
-	private secret = 'secretKey';
-	private url = `https://cnodejs.org/`;
+  private filePath = path.resolve(__dirname, '../data/article.json');
 
-	getJsonInfo(html: string) {
-		const $ = cheerio.load(html);
-		const cells = $('.cell');
+  private async getRawHtml() {
+    const result = await superagent.get(this.url);
 
-		const countInfos: Article[] = [];
+    return result.text;
+    // this.getJsonInfo(result.text);
+  }
 
+  private writeFile(content: string) {
+    fs.writeFileSync(this.filePath, content, 'utf-8');
+  }
 
-		cells.map((index, element) => {
-			const visit = parseInt($(element).find('.count_of_visits').eq(0).text().trim(), 10)
-			const title = $(element).find('.topic_title').eq(0).text().trim()
+  private async initProcess() {
+    const text: string = await this.getRawHtml();
+    const articlesJSON = this.analyzer.analyze(text, this.filePath);
+    this.writeFile(articlesJSON);
+  }
 
-			countInfos.push({
-				title, visit
-			})
-		})
+  constructor(private url: string, private analyzer: Analyzer) {
+    this.initProcess();
+  }
+}
 
-		const result = {
-			time: (new Date).getTime(),
-			data: countInfos
-		}
+const url = `https://cnodejs.org/`;
+const analyzer = CnodeAnalyzer.getInstance();
 
-		console.log(result)
-		
-	};
-
-	async getRawHtml() {
-		const result = await superagent.get(this.url);
-		
-		this.getJsonInfo(result.text)
-	};
-
-	constructor() {
-		this.getRawHtml();
-	}
-} 
-
-const crowller = new Crowller()
+new Crowller(url, analyzer);

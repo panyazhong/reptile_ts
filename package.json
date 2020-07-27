@@ -4,7 +4,14 @@
   "description": "reptile with typescript",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node ./src/crowller.ts"
+    "dev": "concurrently npm:dev:*",
+    "dev:build": "tsc -w",
+    "dev:start": "nodemon node ./build/crowller.js"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "data/*"
+    ]
   },
   "keywords": [
     "typescript"
@@ -14,6 +21,8 @@
   "devDependencies": {
     "@types/cheerio": "^0.22.21",
     "@types/superagent": "^4.1.8",
+    "concurrently": "^5.2.0",
+    "nodemon": "^2.0.4",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.7"
   },
